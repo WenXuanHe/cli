@@ -1,0 +1,72 @@
+#!/usr/bin/env node
+const figlet = require('figlet');
+const chalk = require('chalk');
+const versionStr = figlet.textSync('WenXuan');
+const _version = require('../package.json').version;
+const Printer = require('@darkobits/lolcatjs').default;
+const input = `这是一个脚手架\n${versionStr} \n ${_version}`;
+const transformed = Printer.fromString(input);
+const { program } = require('commander');
+const inquirer = require('inquirer');
+const shell = require('shelljs');
+const ora = require('ora');
+const download = require('download-git-repo');
+// hwx --version
+program.version(transformed);
+
+program
+  .name("创建一个项目")
+  .option('-c, --create <type>')
+  .action((commandAndOptions) => {
+    console.log('commandAndOptions', commandAndOptions)
+    inquirer
+    .prompt([
+        {
+            type: 'text',
+            name: 'dirname',
+            message: '请输入文件夹名称'
+        },
+        {
+            type: 'list',
+            name: 'kj',
+            message: '请选择框架',
+            choices: [
+                {
+                    name: 'vue+vite',
+                    value: 'vue'
+                },
+                {
+                    name: 'react+redux',
+                    value: 'react'
+                }
+            ]
+        },
+    ])
+    .then(answers => {
+        console.log(answers);
+        const _pwd = shell.pwd().stdout;
+        const projectPath = `${_pwd}/${answers.dirname}`
+        shell.rm('-rf', projectPath)
+        shell.mkdir(projectPath)
+        const spinner = ora('downloading template').start();
+        const template = `direct:https://github.com/WenXuanHe/myblog-front-en.git`;
+        download(template, projectPath, { clone: true}, (err) => {
+            spinner.stop();
+            if(err){
+                chalk.red('download template error')
+                return;
+            }
+            chalk.green('download template success')
+
+        })
+        // Use user feedback for... whatever!!
+    })
+    .catch(error => {
+        if(error.isTtyError) {
+        // Prompt couldn't be rendered in the current environment
+        } else {
+        // Something else when wrong
+        }
+    });
+  })
+program.parse(process.argv);
